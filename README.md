@@ -1,2 +1,2 @@
 # machine-design-dream-team
-Machine Design 1 project repository
+Machine Design 1 Project Repository
