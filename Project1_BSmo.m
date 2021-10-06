@@ -112,3 +112,37 @@ legend('h3p','f3p(length)','f4p(length)','f5p(length)');
 xlim([0, 2*pi]);
 set(gca, 'XTick', 0: pi/4: 2*pi);
 set(gca,'XTickLabel',{'0','pi/4','pi/2','3*pi/4','pi', '5*pi/4', '3*pi/2', '7*pi/4', '2*pi'});
+
+%% Validating Points Randomly On Plot
+figure(4)
+plot(theta2,h3 , 'r', theta2,f3 , 'g', theta2,f4, 'b', theta2,f5, 'm') 
+hold on
+plot(theta2(100,1),h3(100,1),'|', 'MarkerSize',15, "Color", "blue")
+text(theta2(100,1),h3(100,1)+.2,sprintf(['h3 = ' num2str(h3(100,1)) ' @  \\theta_{2} = ' num2str(theta2(100,1))]), 'FontSize',5)
+
+plot(theta2(200,1),f3(200,1),'|', 'MarkerSize',15, "Color", "blue")
+text(theta2(200,1),f3(200,1)+.2,sprintf(['f3 = ' num2str(f3(200,1)) ' @  \\theta_{2} = ' num2str(theta2(200,1))]), 'FontSize',5)
+
+plot(theta2(75,1),f4(75,1),'|', 'MarkerSize',15, "Color", "blue")
+text(theta2(75,1),f4(75,1)+.2,sprintf(['f4 = ' num2str(f4(75,1)) ' @  \\theta_{2} = ' num2str(theta2(75,1))]), 'FontSize',5)
+
+plot(theta2(150,1),f4(150,1),'|', 'MarkerSize',15, "Color", "blue")
+text(theta2(150,1),f4(150,1)+.2,sprintf(['f4 = ' num2str(f4(150,1)) ' @  \\theta_{2} = ' num2str(theta2(150,1))]), 'FontSize',5)
+
+plot(theta2(30,1),f5(30,1),'|', 'MarkerSize',15, "Color", "blue")
+text(theta2(30,1),f5(30,1)-.2,sprintf(['f5 = ' num2str(f5(30,1)) ' @  \\theta_{2} = ' num2str(theta2(30,1))]), 'FontSize',5)
+
+plot(theta2(130,1),f5(130,1),'|', 'MarkerSize',15, "Color", "blue")
+text(theta2(130,1),f5(130,1)+.2,sprintf(['f5 = ' num2str(f5(130,1)) ' @  \\theta_{2} = ' num2str(theta2(130,1))]), 'FontSize',5)
+
+% Configuring the data and axis display settings
+grid on                
+grid minor
+title('Plotting Random Coordinates on 1st Order Kinematic Coefficients') 
+xlabel('\theta_2 (rad)')
+ylabel('Outputs')
+xticks([0 .25*pi .5*pi .75*pi pi 1.25*pi 1.5*pi 1.75*pi 2*pi]) 
+xticklabels({'0','\pi/4','\pi/2','3\pi/4','\pi','5\pi/4','3\pi/2','7\pi/4','2\pi'})
+xlim([0,(2*pi)])
+ylim([-1,2.5])
+legend('h3_{(-)}','f3_{(length)}','f4_{(length)}','f5_{(length)}','FontSize',11)
