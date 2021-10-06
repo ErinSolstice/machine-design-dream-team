@@ -7,7 +7,7 @@
 clear; clc; % clear previous work
 
 % reading in the data
-fullTable = readtable('Project I Plotting Fall 2020.xlsx', 'Range','A2:M362');
+fullTable = readtable('positionData.xlsx', 'Range','A1:E362');
 
 % defining colors for the graphs
 graphColors = {'#BD3131','#CAC006','#3C7FE6','#40A72A'};
