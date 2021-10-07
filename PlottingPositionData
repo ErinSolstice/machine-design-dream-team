@@ -1,0 +1,102 @@
+%%%%%%%% Connor McCarthy 
+%%%%%%%% 10/7/21 
+%%%%%%%% ME 4133 Machine Design 
+%%%%%%%% Project 2: Plotting Data
+
+
+
+%Begin Setup
+
+D = readtable('positionData.xlsx', 'Range','A1:E362'); %Set a variable equal to the table of data for ease of reference
+
+%%%% Defining variables as column arrays of the table data for easy
+%%%% reference during plotting
+
+theta2 = D{:,1} ;
+theta3 = D{:,2} ;
+R3 = D{:,3} ;
+R4 = D{:,4} ;
+R5 = D{:,5} ;
+
+%%%%%%%%%%%%%%%%%%
+
+Plot 1: Position Analysis
+
+%   Defining local mins and maxs
+
+
+R3min = islocalmin(R3); %%%%Finding local mins and maxes found here: https://www.mathworks.com/help/matlab/ref/islocalmin.html
+R4min = islocalmin(R4);
+R5min = islocalmin(R5);
+T3min = islocalmin(theta3);
+
+
+R3max = islocalmax(R3);
+R4max = islocalmax(R4);
+R5max = islocalmax(R5);
+T3max = islocalmax(theta3);
+
+
+%%%%%%%%%%% Plotting the Outputs %%%%%%%%%%%%%
+
+
+figure
+
+plot(theta2,theta3 , "Color", "#A020F0")
+hold on
+plot(theta2,R3 , "Color", "blue") %%%% Hold on hold off learned from here: https://www.mathworks.com/matlabcentral/answers/292226-how-to-plot-multiple-lines-in-a-graph
+
+plot(theta2,R4 , "Color"', "red" )
+
+plot(theta2,R5 , "Color"', "#FFA500")
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%        Plotting the local mins and maxs   with labels    %
+
+plot(theta2(R3min),R3(R3min),'X', 'MarkerSize',15, "Color", "blue"); %%%%Marker Size Syntax learned from here: https://www.mathworks.com/matlabcentral/answers/6537-how-do-i-change-the-marker-size-for-a-plot
+text(theta2(R3min)-.56,R3(R3min)+.5,sprintf(['Local min:' '\nR3 \\approx ' num2str(R3(R3min)) ' @  \\theta_{2} \\approx ' num2str(theta2(R3min))]), 'FontSize',5) %%%% Printing text at local min
+%
+plot(theta2(R4min),R4(R4min),'X', 'MarkerSize',15, "Color", "red");
+text(theta2(R4min)-1.3,R4(R4min)-.5,sprintf(['Local min:' '\n R4 \\approx ' num2str(R4(R4min)) ' @ \\theta_{2} \\approx ' num2str(theta2(R4min))]), 'FontSize',5)
+%
+plot(theta2(R5min),R5(R5min),'X', 'MarkerSize',15, "Color", "#FFA500");
+text(theta2(R5min)-.56,R5(R5min)-.75,sprintf(['Local min:' '\nR5 \\approx ' num2str(R5(R5min)) ' @ \\theta_{2} \\approx ' num2str(theta2(R5min))]), 'FontSize',5)
+%
+plot(theta2(T3min),theta3(T3min),'X', 'MarkerSize',15, "Color", "#A020F0");
+text(theta2(T3min)+.16,theta3(T3min)+.35,sprintf(['Local min:' '\n \\theta _{3} \\approx ' num2str(theta3(T3min)) ' @ \\theta_{2} \\approx ' num2str(theta2(T3min))]), 'FontSize',5)
+
+
+plot(theta2(R3max),R3(R3max),'X', 'MarkerSize',15, "Color", "blue"); %%%%Marker Size Syntax learned from here: https://www.mathworks.com/matlabcentral/answers/6537-how-do-i-change-the-marker-size-for-a-plot
+text(theta2(R3max)-.56,R3(R3max)+.5,sprintf(['Local max:' '\nR3 \\approx ' num2str(R3(R3max)) ' @  \\theta_{2} \\approx ' num2str(theta2(R3max))]), 'FontSize',5) %%%% Printing text at local min
+%
+plot(theta2(R4max),R4(R4max),'X', 'MarkerSize',15, "Color", "red");
+text(theta2(R4max),R4(R4max)-.5,sprintf(['Local max:' '\n R4 \\approx ' num2str(R4(R4max)) ' @ \\theta_{2} \\approx ' num2str(theta2(R4max))]), 'FontSize',5)
+%
+plot(theta2(R5max),R5(R5max),'X', 'MarkerSize',15, "Color", "#FFA500" );
+text(theta2(R5max)-.56,R5(R5max)+.65,sprintf(['Local max:' '\nR5 \\approx ' num2str(R5(R5max)) ' @ \\theta_{2} \\approx ' num2str(theta2(R5max))]), 'FontSize',5)
+%
+plot(theta2(T3max),theta3(T3max),'X', 'MarkerSize',15, "Color", "#A020F0");
+text(theta2(T3max)-.98,theta3(T3max)+.5,sprintf(['Local max:' '\n \\theta _{3} \\approx ' num2str(theta3(T3max)) ' @ \\theta_{2} \\approx ' num2str(theta2(T3max))]), 'FontSize',5)
+
+
+
+
+
+%%% Configuring the data and axis display settings
+
+grid on                %%% Grid Syntax learned from here: https://www.mathworks.com/help/matlab/ref/grid.html
+grid minor
+title('Position Analysis') %%%General plotting learned from here: https://www.mathworks.com/matlabcentral/answers/223794-plotting-data-from-a-table
+xlabel('\theta_2 (rad)')
+ylabel('Outputs')
+xticks([0 .25*pi .5*pi .75*pi pi 1.25*pi 1.5*pi 1.75*pi 2*pi]) %%% Setting X ticks and X ticks labels found here: https://www.mathworks.com/help/matlab/creating_plots/change-tick-marks-and-tick-labels-of-graph-1.html
+xticklabels({'0','\pi/4','\pi/2','3\pi/4','\pi','5\pi/4','3\pi/2','7\pi/4','2\pi'})
+xlim([0,(2*pi)])
+ylim([-3,6])
+legend('\theta_3 _{(rad)}','R3_{(in)}','R4_{(in)}','R5_{(in)}','FontSize',6)
+legend('Location','south')
+
