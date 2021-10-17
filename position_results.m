@@ -54,7 +54,7 @@ for j = 1:361;
          -(R2*sin(th2) - R5*sin(th3) - R6*sin(th6));];
 
         % calculating the correction factor
-        xNew = A\b;
+        xNew = J\b;
 
         % updating the position variables
         th3 = th3 + xNew(1);
