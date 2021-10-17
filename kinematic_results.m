@@ -71,6 +71,10 @@ for j = 1:361;
         if relErr < tol
             break
         end
+        
+        if i = 100
+            disp('Newton-Raphson exceeds 100 iterations');
+        end
     end
     
     % adding the position data to the table
