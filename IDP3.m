@@ -87,7 +87,7 @@ for i = 1:iter
          m4*a_g4y - m4*g;
          Ig_2*alpha2;
          Ig_3*alpha3 + (m3*Rcg3*(cos(theta3(i))*a_g3y - sin(theta3(i))*a_g3x));
-         R1*m4*a_g4x]; %you can't do this without also accounting for the other forces on 4
+         0]; %R1*m4*a_g4x you can't do this without also accounting for the other forces on 4
      
     solution(:,i) = A\J;
 end
