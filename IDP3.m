@@ -27,7 +27,7 @@ fp_g4x = KinematicDataMatrix(:,12);
 h3 = KinematicDataMatrix(:,6);
 h3p = KinematicDataMatrix(:,10);
 
-w2 = 10*(2*pi)*(1/60); % in rads per sec 
+w2 = 1; % in rads per sec 
 
 %Values from Solidworks
 % cx = 1.7; %from solidworks model in inches
@@ -35,7 +35,15 @@ w2 = 10*(2*pi)*(1/60); % in rads per sec
 % dcx = cx/2;
 % dcy = cy/2;
 
-g = 32.2*12; %in/s^2
+g = 32.2; %in/s^2
+
+% m2 = 0; %slug
+% Ig_2 = 0; %slug*in^2
+% 
+% m3 = 0; %slug
+% Ig_3 = 0; %slug*in^2
+% 
+% m4 = 0; %slug
 
 m2 = 0.027/32.2; %slug
 Ig_2 = 0.0088/32.2; %slug*in^2
@@ -46,9 +54,14 @@ Ig_3 = 0.3786/32.2; %slug*in^2
 m4 = .0812/32.2; %slug
 
 Rcg3 = 3.347; %inches, pythag thm from pic
-P4 = 10; %lbf
+P4 = 9; %lbf
 
 iter = length(KinematicDataMatrix(:,1)');
+
+sz = [361 13];
+varNames = ["F12x","F12y","F23","F23x","F23y","F13","F13x","F13y","F34x","F34y","F14","R7F14","T2"];
+varTypes = repmat("double",1,13);
+forcesIDP = table('Size',sz, 'VariableTypes',varTypes, 'VariableNames',varNames);
 
 for i = 1:iter
     %accelerations
@@ -58,14 +71,14 @@ for i = 1:iter
     a_g2x = 0;
     a_g2y = 0;
 
-    a_g3x = f_g3x(i)*alpha2 + fp_g3x(i)*w2^2;
-    a_g3y = f_g3y(i)*alpha2 + fp_g3y(i)*w2^2;
+    a_g3x = (f_g3x(i)*alpha2 + fp_g3x(i)*w2^2)/12;
+    a_g3y = (f_g3y(i)*alpha2 + fp_g3y(i)*w2^2)/12;
 
-    a_g3x = f_g4x(i)*alpha2 + fp_g4x(i)*w2^2;
+    a_g3x = (f_g4x(i)*alpha2 + fp_g4x(i)*w2^2)/12;
     a_g3y = 0;
 
     a_g4y = 0;
-    a_g4x = f_g4x(i)*alpha2 + fp_g4x(i)*w2^2; % fp_g4x = fp4
+    a_g4x = (f_g4x(i)*alpha2 + fp_g4x(i)*w2^2)/12; % fp_g4x = fp4
     
     % A = 9x9
     A = [1, 0, -cos(theta3(i)-(3*pi/2)),                0,           0,    0, 0, 0, 0;
@@ -74,22 +87,41 @@ for i = 1:iter
          0, 0, sin(theta3(i)-(3*pi/2)),     sin(theta3(i)-(3*pi/2)), 0,   -1, 0, 0, 0;
          0, 0,          0,                              0,           1,    0, 0, 0, 0; %why did you have a 1 in this line for F_13?
          0, 0,          0,                              0,           0,    1, 1, 0, 0;
-         0, 0, -R2*sin(theta2(i)-theta3(i)),            0,           0,    0, 0, 0, 1; %I don't think you need that +pi/2
-         0, 0,         -R3(i),                      -(R3(i)-R5(i)),  0,    0, 0, 0, 0; %ccw vs cw
+         0, 0, -R2*sin(theta2(i)-theta3(i) + pi/2),     0,           0,    0, 0, 0, 1; %I don't think you need that +pi/2
+         0, 0,         R3(i),                      R3(i)-R5(i),  0,    0, 0, 0, 0; %ccw vs cw
          0, 0,          0,                              0,           0,    0, 0, 1, 0];
-         
-    
+     
     J = [m2*a_g2x;
-         m2*a_g2y; %center of gravity is at pin + m2*g;
+         m2*a_g2y + m2*g; %center of gravity is at pin + m2*g;
          m3*a_g3x;
          m3*a_g3y + m3*g;
          m4*a_g4x - P4;
-         m4*a_g4y - m4*g;
-         Ig_2*alpha2;
-         Ig_3*alpha3 + (m3*Rcg3*(cos(theta3(i))*a_g3y - sin(theta3(i))*a_g3x));
-         0]; %change R1*m4*a_g4x you can't do this without also accounting for the other forces on 4
-     
-    solution(:,i) = A\J;
+         m4*a_g4y + m4*g;
+         Ig_2*alpha2/12;
+         Ig_3*alpha3/12 + m3*Rcg3*(cos(theta3(i))*a_g3y - sin(theta3(i))*a_g3x + m3*g*cos(theta3(i)));
+         0]; %change you can't do this without also accounting for the other forces on 4
+    
+    x = A\J;
+    solution(:,i) = x;
+    forcesIDP.F12x(i) = x(1);
+    forcesIDP.F12y(i) = x(2);
+    
+    forcesIDP.F23(i) = x(3);
+    forcesIDP.F23x(i) = x(3)*cos(theta3(i)-(3*pi/2));
+    forcesIDP.F23y(i) = x(3)*sin(theta3(i)-(3*pi/2));
+    
+    forcesIDP.F13(i) = x(4);
+    forcesIDP.F13x(i) = x(4)*cos(theta3(i)-(3*pi/2));
+    forcesIDP.F13y(i) = x(4)*sin(theta3(i)-(3*pi/2));
+    
+    forcesIDP.F34x(i) = x(5);
+    forcesIDP.F34y(i) = x(6);
+    
+    forcesIDP.F14(i) = x(7);
+    forcesIDP.R7F14(i) = x(8);
+    
+    forcesIDP.T2(i) = x(9);
+    
 end
  
 %% Plotting 

@@ -24,9 +24,9 @@ Ig2 = 0.0088/32.2;
 Ig3 = 0.3786/32.2;
 
 % in rad/s
-w2 = 10*(2*pi)*(1/60);
+w2 = 1;
 % in lbf
-P4 = 10;
+P4 = 9;
 
 for i = 1:361
     h2 = 1;
@@ -46,13 +46,13 @@ for i = 1:361
     
     dIe_dt = 2*(Ig2*h2*h2p) + 2*(m3*(fg3x*fg3xp + fg3y*fg3yp) + Ig3*h3*h3p) + 2*(m4*fg4x*fg4xp);
     
-    T2 = 0.5*dIe_dt*w2^2 + m3*32.2*12*fg3y - P4*f4;
+    T2 = 0.5*dIe_dt/12*w2^2 + m3*32.2*fg3y - P4*f4;
     
     torDataConst.theta2(i) = (i-1)*pi/180;
     torDataConst.T2(i) = T2;
 end
 
-figure(1)
+figure(3)
 plot(torDataConst.theta2,torDataConst.T2)
 xlabel('theta2 (rad)')
 ylabel('torque (lbs)')

@@ -23,17 +23,19 @@ m4 = 0.0812/32.2;
 Ig2 = 0.0088/32.2;
 Ig3 = 0.3786/32.2;
 
-% in rad/s
-w2 = 10*(2*pi)*(1/60);
+% in lbf*in
+T2 = -17.45
 % in lbf
 P4 = 10;
+
+
 
 % in rad/s
 dw2 = 1;
 w2 = 0;
 
 % in rad
-theta2 = 0;
+theta2 = pi/2;
 
 % in seconds
 dt = 0.001;
