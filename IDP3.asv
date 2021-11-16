@@ -1,9 +1,7 @@
 %% IDP for Project Mechanism
 % Bailey Smoorenburg, Connor McCarthy, Gavin Sheng, Jill Bohnet, Patrick Herke
 
-
-    clc;
-    clear;
+function ax = IDP3(w2, P4)
 
     KinematicDataMatrix = readmatrix('kinematicData.xlsx', 'Range', 'A:Q');%readtable to ref wirh column names
     kinData = readtable('kinematicData.xlsx');
@@ -29,7 +27,6 @@
     h3 = KinematicDataMatrix(:,6);
     h3p = KinematicDataMatrix(:,10);
 
-    w2 = 1; % in rads per sec 
     g = 32.2; %in/s^2
 
     % m2 = 0; %slug
@@ -49,7 +46,6 @@
     m4 = .0812/32.2; %slug
 
     Rcg3 = 3.347; %inches, pythag thm from pic
-    P4 = 9; %lbf
 
     iter = length(KinematicDataMatrix(:,1)');
 
@@ -119,6 +115,9 @@
         forcesIDP.T2(i) = x(9);
 
     end
+    
+    filename = 'forcesIDP.xlsx';
+    writetable(posData,filename,'Sheet',1,'Range','A1')
 
     %% Plotting
 
@@ -186,3 +185,4 @@
     ax = gca;
     saveName = sprintf('jointForces_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
     exportgraphics(ax,saveName)
+end

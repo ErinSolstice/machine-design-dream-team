@@ -24,16 +24,16 @@ Ig2 = 0.0088/32.2;
 Ig3 = 0.3786/32.2;
 
 % in lbf*in
-T2 = -20
+T2 = 1
 % in lbf
-P4 = 10;
+P4 = 9;
 
 % in rad/s
-dw2 = 1;
+dw2 = -1;
 w2 = 0;
 
 % in rad
-theta2 = pi/2;
+theta2 = 0;
 
 % in seconds
 dt = 0.001;
@@ -42,12 +42,17 @@ dt = 0.001;
 interp = @(col, deg, pos) ((fullTable.(col)(pos+1) - fullTable.(col)(pos))*(deg+1-pos) + fullTable.(col)(pos));
 
 for i=1:1001
+    if abs(w2) > 100
+        fprintf('Stopped at %d iterations and w2 = %f', i, w2)
+        break
+    end
+    
     deg = theta2*180/pi;
     while deg > 360
-        deg = deg - 360;
+        deg = mod(deg,360);
     end
     while deg < 0
-        deg = deg + 360;
+        deg = 360 - mod(-deg,360);
     end
     
     pos = floor(deg+1);
