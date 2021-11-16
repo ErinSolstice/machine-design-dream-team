@@ -27,6 +27,10 @@ function ax = frictionIDP(w2, P4)
     f4p = kinData.f4p;
     h3 = kinData.h3;
     h3p = kinData.h3p;
+    
+    % additional inputs for friction
+    f3 = kinData.f3;
+    f5 = kinData.f5;
 
     g = 32.2; %in/s^2
 
@@ -73,20 +77,29 @@ function ax = frictionIDP(w2, P4)
         fric = zeros(1,1);
         FMag = zeros(2,1);
         F12 = 0;
-        F23 = 0;
+        F34 = 0;
+        F23n = 0;
+        F13n = 0;
+        
+        % input directional indicator
+        Din = sign(w2);
         
         % pin joint directional indicators
-        D12 = sign(w2);
-        D34 = sign(h3)*sign(w2);
+        D12 = Din;
+        D34 = sign(h3(i))*Din;
         
         % pin in slot directional indicators
-        if F23 > 0
-            D23 = 0;
+        if F23n > 0
+            D23 = sign(f3(i) + R*(h3(i) - 1))*Din;
         else
-            D23 = 0;
+            D23 = sign(f3(i) - R*(h3(i) - 1))*Din;
         end
         
-        D13 = 0;
+        if F13n > 0
+            D13 = sign((f3(i)-f5(i)) + R*h3(i))*Din;
+        else
+            D13 = sign((f3(i)-f5(i)) - R*h3(i))*Din;
+        end
         
         % slider in slot directional indicator
         D14 = 0;
@@ -104,18 +117,41 @@ function ax = frictionIDP(w2, P4)
                  0, 0,          0,                              0,           0,    0, 0, 1, 0];
 
 
-            % T12 = mu*R*|F12|*D12
-            %
+            % T12 = mu*R*|F12|*D12 acting on link 1
+            T12 = mu*R*F12*D12;
+            % T34 = mu*R*|F34|*D34 acting on link 4
+            T34 = mu*R*F34*D34;
+            % T13 = mu*R*F13*D13 acting on link 1
+            T13 = mu*R*F13n*D13;
+            % f13 = mu*F13n acting on link 1
+            f13 = mu*F13n;
+            % T23 = mu*R*F13*D13 acting on link 2
+            T23 = mu*R*F23n*D23;
+            % f23 = mu*F23n acting on link 2
+            f23 = mu*F23n;
             
-            J = [m2*a_g2x;
-                 m2*a_g2y + m2*g; %center of gravity is at pin + m2*g;
-                 m3*a_g3x;
-                 m3*a_g3y + m3*g;
-                 m4*a_g4x - P4;
-                 m4*a_g4y + m4*g;
-                 Ig_2*alpha2/12 + mu*R*F12*D12;
-                 Ig_3*alpha3/12 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + m3*g*cos(th3(i)));
-                 0]; %change you can't do this without also accounting for the other forces on 4
+            
+            jKinem = [m2*a_g2x;
+                    m2*a_g2y + m2*g; %center of gravity is at pin + m2*g;
+                    m3*a_g3x;
+                    m3*a_g3y + m3*g;
+                    m4*a_g4x - P4;
+                    m4*a_g4y + m4*g;
+                    Ig_2*alpha2/12;
+                    Ig_3*alpha3/12 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + m3*g*cos(th3(i)));
+                    0];
+            
+            jForce = [0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    -T12 + -T23;
+                    -T34 + -T13 + -T23;
+                    T34];
+            
+            J = jKinem + jForce;
             
             x = A\J;
             
@@ -123,7 +159,7 @@ function ax = frictionIDP(w2, P4)
             F34 = sqrt(x(5)^2 + x(6)^2); % F34 = sqrt(F34x^2 + F34y^2)
             
             fricOld = fric;
-            fric = (1/sqrt(1/mu^2 + 1)).*[F12]
+            fric = (1/sqrt(1/mu^2 + 1)).*[F12; F34;]
 
             
 %             fricOld = fric;
@@ -136,8 +172,8 @@ function ax = frictionIDP(w2, P4)
             if relError < tol
                 break
             end
-            
         end
+        disp(j)
 
         forcesIDP.F12x(i) = x(1);
         forcesIDP.F12y(i) = x(2);

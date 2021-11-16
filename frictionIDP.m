@@ -1,10 +1,13 @@
 %% IDP for Project Mechanism
 % Bailey Smoorenburg, Connor McCarthy, Gavin Sheng, Jill Bohnet, Patrick Herke
 
-function ax = frictionIDP(w2, P4)
+w2 = 1;
+P4 = 0;
+
+%function ax = frictionIDP(w2, P4)
     tol = 1e-8;
     mu = 0.2;
-    R = 0.1; % in
+    R = 0.2; % in
     
     kinData = readtable('kinematicData.xlsx');
 
@@ -27,6 +30,10 @@ function ax = frictionIDP(w2, P4)
     f4p = kinData.f4p;
     h3 = kinData.h3;
     h3p = kinData.h3p;
+    
+    % additional inputs for friction
+    f3 = kinData.f3;
+    f5 = kinData.f5;
 
     g = 32.2; %in/s^2
 
@@ -70,24 +77,31 @@ function ax = frictionIDP(w2, P4)
         a_g4y = 0;
         a_g4x = (f4(i)*alpha2 + f4p(i)*w2^2)/12; % fp_g4x = fp4
         
-        fric = zeros(1,1);
-        FMag = zeros(2,1);
+        fric = zeros(4,1);
         F12 = 0;
         F34 = 0;
-        F23 = 0;
+        F23n = 0;
+        F13n = 0;
+        
+        % input directional indicator
+        Din = sign(w2);
         
         % pin joint directional indicators
-        D12 = sign(w2);
-        D34 = sign(h3(i))*sign(w2);
+        D12 = Din;
+        D34 = sign(h3(i))*Din;
         
         % pin in slot directional indicators
-        if F23 > 0
-            D23 = 0;
+        if F23n > 0
+            D23 = sign(f3(i) + R*(h3(i) - 1))*Din;
         else
-            D23 = 0;
+            D23 = sign(f3(i) - R*(h3(i) - 1))*Din;
         end
         
-        D13 = 0;
+        if F13n > 0
+            D13 = sign((f3(i)-f5(i)) + R*h3(i))*Din;
+        else
+            D13 = sign((f3(i)-f5(i)) - R*h3(i))*Din;
+        end
         
         % slider in slot directional indicator
         D14 = 0;
@@ -105,35 +119,65 @@ function ax = frictionIDP(w2, P4)
                  0, 0,          0,                              0,           0,    0, 0, 1, 0];
 
 
-            % T12 = mu*R*|F12|*D12
+            % T12 = mu*R*|F12|*D12 acting on link 1
             T12 = mu*R*F12*D12;
-            % T34 = mu*R*|F34|*D34;
+            % T34 = mu*R*|F34|*D34 acting on link 4
             T34 = mu*R*F34*D34;
+            % T13 = mu*R*F13*D13 acting on link 1
+            T13 = mu*R*F13n*D13;
+            % f13 = mu*F13n acting on link 1
+            f13 = mu*F13n;
+            f13x = f13*cos(th3(i) - pi);
+            f13y = f13*sin(th3(i) - pi);
+            % T23 = mu*R*F13*D13 acting on link 2
+            T23 = mu*R*F23n*D23;
+            % f23 = mu*F23n acting on link 2
+            f23 = mu*F23n;
+            f23x = f23*cos(th3(i) - pi);
+            f23y = f23*sin(th3(i) - pi);
             
-            J = [m2*a_g2x;
-                 m2*a_g2y + m2*g; %center of gravity is at pin + m2*g;
-                 m3*a_g3x;
-                 m3*a_g3y + m3*g;
-                 m4*a_g4x - P4;
-                 m4*a_g4y + m4*g;
-                 Ig_2*alpha2/12 + T12;
-                 Ig_3*alpha3/12 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + m3*g*cos(th3(i))) - T34;
-                 0 + T34]; %change you can't do this without also accounting for the other forces on 4
+            
+            jKinem = [m2*a_g2x;
+                    m2*a_g2y + m2*g; %center of gravity is at pin + m2*g;
+                    m3*a_g3x;
+                    m3*a_g3y + m3*g;
+                    m4*a_g4x - P4;
+                    m4*a_g4y + m4*g;
+                    Ig_2*alpha2/12;
+                    Ig_3*alpha3/12 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + m3*g*cos(th3(i)));
+                    0];
+            
+            jForce = [f23x;
+                    f23y;
+                    -f13x + -f23x;
+                    -f13y + -f23y;
+                    0;
+                    0;
+                    -T12 + T23;
+                    -T34 + -T13 + -T23;
+                    T34];
+            
+            J = jKinem - jForce;
             
             x = A\J;
             
             F12 = sqrt(x(1)^2 + x(2)^2); % F12 = sqrt(F12x^2 + F12y^2)
             F34 = sqrt(x(5)^2 + x(6)^2); % F34 = sqrt(F34x^2 + F34y^2)
+            F13n = x(4);
+            F23n = x(3);
             
             fricOld = fric;
-            fric = (1/sqrt(1/mu^2 + 1)).*[F12; F34;]
+            fric = [(1/sqrt(1/mu^2 + 1))*F12;
+                    (1/sqrt(1/mu^2 + 1))*F34;
+                    mu*F13n;
+                    mu*F23n;]
 
             
 %             fricOld = fric;
 %             fric = (1/sqrt(1/mu^2 + 1)).*[F12; F34; F13; F23; F14];
 
-            % x = [  1,    2,   3,   4,   5,    6,    7,    8,    9]
-            % x = [F12x, F12y, F23, F13, F34x, F34y, F14, R7F14, T2]
+            % x = [  1,    2,    3,    4,   5,    6,    7,    8,    9]
+            % x = [F12x, F12y, F23n, F13n, F34x, F34y, F14, R7F14, T2]
             
             relError = norm(fric - fricOld)/norm(fricOld);
             if relError < tol
@@ -232,4 +276,4 @@ function ax = frictionIDP(w2, P4)
     ax = gca;
     saveName = sprintf('jointForces_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
     exportgraphics(ax,saveName)
-end
+%end
