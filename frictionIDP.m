@@ -299,6 +299,6 @@ P4 = 10;
 
     % saving the graph
     ax = gca;
-    saveName = sprintf('jointForces_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
+    saveName = sprintf('jointForcesFriction_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
     exportgraphics(ax,saveName)
 %end
