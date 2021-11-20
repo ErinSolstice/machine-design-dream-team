@@ -24,19 +24,23 @@ Ig2 = 0.0088/32.2;
 Ig3 = 0.3786/32.2;
 
 % in lbf*in
-T2 = 1
+T2 = -22
 % in lbf
-P4 = 9;
+P4 = 10;
 
 % in rad/s
 dw2 = -1;
 w2 = 0;
+a2 = 0;
+t = 0;
+dt = 0.001;
 
 % in rad
-theta2 = 0;
+theta2 = 1.36;
+dth2 = 5*pi/180;
 
 % in seconds
-dt = 0.001;
+%dt = 0.001;
 
 % interpolation of KCs
 interp = @(col, deg, pos) ((fullTable.(col)(pos+1) - fullTable.(col)(pos))*(deg+1-pos) + fullTable.(col)(pos));
@@ -79,11 +83,24 @@ for i=1:1001
     Ie = (Ig2*h2^2) + (m3*(fg3x^2 + fg3y^2) + Ig3*h3^2) + (m4*fg4x^2);
     dIe_dt = 2*(Ig2*h2*h2p) + 2*(m3*(fg3x*fg3xp + fg3y*fg3yp) + Ig3*h3*h3p) + 2*(m4*fg4x*fg4xp);
     
+%     if i ~= 1
+%         dt = [(-w2 + sqrt(w2^2 + 2*a2*dth2))/a2;
+%             (-w2 - sqrt(w2^2 + 2*a2*dth2))/a2;];
+%             if dt(1)*dt(2) > 0
+%                 dt = min(dt)
+%             elseif dt*(1)*dt(2) < 0
+%                 dt = max(dt)
+%             end
+%     else
+%         dt = 0.001;
+%     end
+    
     a2 = (T2 - 0.5*dIe_dt*w2^2 - m3*32.2/12*fg3y + P4*f4)/Ie;
     theta2 = theta2 + w2*dt + 0.5*a2*dt^2;
     w2 = w2 + a2*dt;
+    t = t + dt;
     
-    torData.t(i) = dt*(i);
+    torData.t(i) = t;
     torData.T2(i) = T2;
     torData.theta2(i) = theta2;
     torData.w2(i) = w2;

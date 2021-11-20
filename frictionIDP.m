@@ -1,8 +1,9 @@
 %% IDP for Project Mechanism
 % Bailey Smoorenburg, Connor McCarthy, Gavin Sheng, Jill Bohnet, Patrick Herke
+clear; clc;
 
-w2 = 1;
-P4 = 10;
+w2 = 2*pi;
+P4 = -10;
 
 %function ax = frictionIDP(w2, P4)
     tol = 1e-8;
@@ -37,7 +38,7 @@ P4 = 10;
     f3 = kinData.f3;
     f5 = kinData.f5;
 
-    g = 32.2; %in/s^2
+    g = 32.2; %ft/s^2
 
     % m2 = 0; %slug
     % Ig_2 = 0; %slug*in^2
@@ -48,10 +49,10 @@ P4 = 10;
     % m4 = 0; %slug
 
     m2 = 0.027/32.2; %slug
-    Ig_2 = 0.0088/32.2; %slug*in^2
+    Ig_2 = 0.0088/32.2/12; %slug*ft*in
 
     m3 = 0.1135/32.2; %slug
-    Ig_3 = 0.3786/32.2; %slug*in^2
+    Ig_3 = 0.3786/32.2/12; %slug*ft*in
 
     m4 = .0812/32.2; %slug
 
@@ -63,22 +64,29 @@ P4 = 10;
     varTypes = repmat("double",1,13);
     forcesIDP = table('Size',sz, 'VariableTypes',varTypes, 'VariableNames',varNames);
 
-    for i = 1:361
+     for i = 1:361
+         stop = 0;
+%         if f4*w2 > 0
+%             P4 = -10;
+%         else
+%             P4 = 0;
+%         end
+        
         %accelerations
         alpha2 = 0;
-        alpha3 = h3(i)*alpha2 + h3p(i)*w2^2;
+        alpha3 = h3(i)*alpha2 + h3p(i)*w2^2; %rad/s^2
 
         a_g2x = 0;
         a_g2y = 0;
 
-        a_g3x = (fg3x(i)*alpha2 + fg3xp(i)*w2^2)/12;
-        a_g3y = (fg3y(i)*alpha2 + fg3yp(i)*w2^2)/12;
+        a_g3x = (fg3x(i)*alpha2 + fg3xp(i)*w2^2)/12; %ft/s^2
+        a_g3y = (fg3y(i)*alpha2 + fg3yp(i)*w2^2)/12; %ft/s^2
 
-        a_g3x = (f4(i)*alpha2 + f4p(i)*w2^2)/12;
+        a_g3x = (f4(i)*alpha2 + f4p(i)*w2^2)/12; %ft/s^2
         a_g3y = 0;
 
         a_g4y = 0;
-        a_g4x = (f4(i)*alpha2 + f4p(i)*w2^2)/12; % fp_g4x = fp4
+        a_g4x = (f4(i)*alpha2 + f4p(i)*w2^2)/12; %ft/s^2
         
         fric = ones(5,1);
         F12 = 0;
@@ -113,38 +121,38 @@ P4 = 10;
         
         for j = 1:100
             % T12 = mu*R*|F12|*D12 acting on link 1
-            T12 = mu*R*F12*D12;
+            T12 = mu*R*F12*D12; %lbf*in
             % T34 = mu*R*|F34|*D34 acting on link 4
-            T34 = mu*R*F34*D34;
+            T34 = mu*R*F34*D34; %lbf*in
             % T13 = mu*R*F13*D13 acting on link 1
-            T13 = mu*R*F13n*D13;
+            T13 = mu*R*F13n*D13; %lbf*in
             % f13 = mu*F13n acting on link 1
-            f13 = mu*F13n;
+            f13 = mu*abs(F13n)*D13; %lbf
             f13x = f13*cos(th3(i) - pi);
             f13y = f13*sin(th3(i) - pi);
             % T23 = mu*R*F13*D13 acting on link 2
-            T23 = mu*R*F23n*D23;
+            T23 = mu*R*F23n*D23; %lbf*in
             % f23 = mu*F23n acting on link 2
-            f23 = mu*F23n;
+            f23 = mu*abs(F23n)*D23; %lbf
             f23x = f23*cos(th3(i) - pi);
             f23y = f23*sin(th3(i) - pi);
             % f14 acting on link 4
-            N14 = [F14; R7F14]\[1 1; rw -rw];
-            f14 = mu*(abs(N14(1)) + abs(N14(2)))*D14;
+            N14 = [F14; R7F14]\[1 1; rw -rw]; %lbf
+            f14 = mu*(abs(N14(1)) + abs(N14(2)))*D14; %lbf
             % the book swaps the signs on T14 depending on >0 but I don;t
             % think that's necessary
             % it also is used if height above and below the block C pin
             % aren't the same
             if N14(1) > 0
-                T14(1) = mu*rh*N14(1)*D14;
+                T14(1) = mu*rh*N14(1)*D14; %lbf*in
             else
-                T14(1) = mu*rh*N14(2)*D14;
+                T14(1) = mu*rh*N14(2)*D14; %lbf*in
             end
             
             if N14(2) > 0
-                T14(2) = mu*rh*N14(2)*D14;
+                T14(2) = mu*rh*N14(2)*D14; %lbf*in
             else
-                T14(2) = mu*rh*N14(2)*D14;
+                T14(2) = mu*rh*N14(2)*D14; %lbf*in
             end
             
             % storing the old friction values
@@ -157,6 +165,8 @@ P4 = 10;
            
             relError = norm(fric - fricOld)/norm(fricOld);
             if relError < tol
+                fricStore{i} = fric;
+                stop = 1;
                 break
             end
             
@@ -177,8 +187,8 @@ P4 = 10;
                     m3*a_g3y;
                     m4*a_g4x;
                     m4*a_g4y;
-                    Ig_2*alpha2/12;
-                    Ig_3*alpha3/12 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + m3*g*cos(th3(i)));
+                    Ig_2*alpha2;
+                    Ig_3*alpha3 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + g*cos(th3(i)));
                     0];
             
             jForce = [f23x;
@@ -228,7 +238,6 @@ P4 = 10;
         forcesIDP.R7F14(i) = x(8);
 
         forcesIDP.T2(i) = x(9);
-
     end
     
     filename = 'forcesIDP.xlsx';
@@ -301,4 +310,7 @@ P4 = 10;
     ax = gca;
     saveName = sprintf('jointForcesFriction_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
     exportgraphics(ax,saveName)
+    
+    figure(20)
+    plot(kinData.theta2, f4*w2, '-')
 %end

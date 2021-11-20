@@ -58,14 +58,14 @@ function ax = IDP(w2, P4)
         a_g2x = 0;
         a_g2y = 0;
 
-        a_g3x = (f_g3x(i)*alpha2 + fp_g3x(i)*w2^2)/12;
-        a_g3y = (f_g3y(i)*alpha2 + fp_g3y(i)*w2^2)/12;
+        a_g3x = (f_g3x(i)*alpha2 + fp_g3x(i)*w2^2)/12; % ft/s^2
+        a_g3y = (f_g3y(i)*alpha2 + fp_g3y(i)*w2^2)/12; % ft/s^2
 
-        a_g3x = (f_g4x(i)*alpha2 + fp_g4x(i)*w2^2)/12;
+        a_g3x = (f_g4x(i)*alpha2 + fp_g4x(i)*w2^2)/12; % ft/s^2
         a_g3y = 0;
 
         a_g4y = 0;
-        a_g4x = (f_g4x(i)*alpha2 + fp_g4x(i)*w2^2)/12; % fp_g4x = fp4
+        a_g4x = (f_g4x(i)*alpha2 + fp_g4x(i)*w2^2)/12; % fp_g4x = fp4 % ft/s^2
 
         % A = 9x9
         A = [1, 0, -cos(theta3(i)-(3*pi/2)),                0,           0,    0, 0, 0, 0;
@@ -133,7 +133,9 @@ function ax = IDP(w2, P4)
 
     % finding indices of the local minimums and maximums for the position graph
     for i=1:8
-        posMinMax.(posColNames{i}) = [find(forcesIDP.(posColNames{i}) == min(forcesIDP.(posColNames{i}))); find(forcesIDP.(posColNames{i}) == max(forcesIDP.(posColNames{i})))];
+        maxes = (find(forcesIDP.(posColNames{i}) == max(forcesIDP.(posColNames{i}))));
+        mins = (find(forcesIDP.(posColNames{i}) == min(forcesIDP.(posColNames{i}))));
+        posMinMax.(posColNames{i}) = [mins(1); maxes(1)];
     end
 
     % defining the figure
@@ -144,6 +146,7 @@ function ax = IDP(w2, P4)
         hold on
     end
     hold off
+    disp(forcesIDP.T2(78))
 
     % adding plot title
     tit = sprintf('Joint Force Analysis at w2 = %0.00f and P4 = %0.00f', w2, P4)

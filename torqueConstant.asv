@@ -19,14 +19,12 @@ m2 = 0.027/32.2;
 m3 = 0.1135/32.2;
 m4 = 0.0812/32.2;
 
-% in lbm*in^2 and convert to slug*ft*in
+% in lbm*in^2 and convert to slug*in^2
 Ig2 = 0.0088/32.2/12;
 Ig3 = 0.3786/32.2/12;
 
-g = 32.2 % ft/s^2
-
 % in rad/s
-w2 = -5;
+w2 = 1;
 % in lbf
 P4 = 10;
 
@@ -46,9 +44,9 @@ for i = 1:361
     
     f4 = fullTable.f4(i);
     
-    dIe_dt = 2*(Ig2*h2*h2p) + 2*(m3*(fg3x*fg3xp + fg3y*fg3yp)/12 + Ig3*h3*h3p) + 2*(m4*fg4x*fg4xp)/12;
+    dIe_dt = 2*(Ig2*h2*h2p) + 2*(m3*(fg3x*fg3xp + fg3y*fg3yp) + Ig3*h3*h3p) + 2*(m4*fg4x*fg4xp);
     
-    T2 = 0.5*dIe_dt*w2^2 + m3*g*fg3y - P4*f4;
+    T2 = 0.5*dIe_dt/12*w2^2 + m3*32.2*fg3y - P4*f4;
     
     torDataConst.theta2(i) = (i-1)*pi/180;
     torDataConst.T2(i) = T2;
