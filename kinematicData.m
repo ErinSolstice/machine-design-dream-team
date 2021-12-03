@@ -11,7 +11,7 @@ R2 = 0.82;
 th4 = 0*pi/180;
 R6 = 1.85;
 th6 = 63*pi/180;
-RCG3 = 1.30;
+RCG3 = 2.28;
 
 % Remaining unkown lengths and angles are:
 th2 = 0*pi/180;

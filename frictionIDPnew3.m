@@ -1,12 +1,13 @@
 %% IDP for Project Mechanism
 % Bailey Smoorenburg, Connor McCarthy, Gavin Sheng, Jill Bohnet, Patrick Herke
+clear; clc;
 
-w2 = 1;
-P4 = 10;
+w2 = 10;
+P4 = -10;
 
 %function ax = frictionIDP(w2, P4)
     tol = 1e-8;
-    mu = 0.0;
+    mu = 0.2;
     R = 0.2; % in
     rw = 1.7/2 % in % half the width of the slider
     rh = 1.0/2 % in % half the height of the slider
@@ -39,31 +40,45 @@ P4 = 10;
 
     g = 32.2; %ft/s^2
 
-    % m2 = 0; %slug
-    % Ig_2 = 0; %slug*in^2
-    % 
-    % m3 = 0; %slug
-    % Ig_3 = 0; %slug*in^2
-    % 
-    % m4 = 0; %slug
+%     m2 = 0; %slug
+%     Ig_2 = 0; %slug*in^2
+%     
+%     m3 = 0; %slug
+%     Ig_3 = 0; %slug*in^2
+%     
+%     m4 = 0; %slug
 
     m2 = 0.027/32.2; %slug
-    Ig_2 = 0.0088/32.2; %slug*in^2
+    Ig_2 = 0.0088/32.2/12; %slug*ft*in
 
     m3 = 0.1135/32.2; %slug
-    Ig_3 = 0.3786/32.2; %slug*in^2
+    Ig_3 = 0.3786/32.2/12; %slug*ft*in
 
     m4 = .0812/32.2; %slug
 
-    Rcg3 = 3.347; %inches, pythag thm from pic
+    Rcg3 = 2.28; %inches, pythag thm from pic
 
     % initializing table to store values
-    sz = [361 13];
-    varNames = ["F12x","F12y","F23","F23x","F23y","F13","F13x","F13y","F34x","F34y","F14","R7F14","T2"];
-    varTypes = repmat("double",1,13);
+    sz = [361 28];
+    varNames = ['theta2',"F12x","F12y","F23","F23x","F23y","F13","F13x","F13y","F34x","F34y","F14","R7F14",'N14_1','N14_2',"T2",'f12','f34','f13','f23','f14','iter','T12','T34','T13','T23','T14_1','T14_2'];
+    varTypes = repmat("double",1,28);
     forcesIDP = table('Size',sz, 'VariableTypes',varTypes, 'VariableNames',varNames);
 
+    F12 = 0;
+    F34 = 0;
+    F23n = 0;
+    F13n = 0;
+    F14 = 0;
+    R7F14 = 0;
+    
     for i = 1:361
+        stop = 0;
+%         if f4*w2 > 0
+%             P4 = -10;
+%         else
+%             P4 = 0;
+%         end
+        
         %accelerations
         alpha2 = 0;
         alpha3 = h3(i)*alpha2 + h3p(i)*w2^2; %rad/s^2
@@ -81,12 +96,6 @@ P4 = 10;
         a_g4x = (f4(i)*alpha2 + f4p(i)*w2^2)/12; %ft/s^2
         
         fric = ones(5,1);
-        F12 = 0;
-        F34 = 0;
-        F23n = 0;
-        F13n = 0;
-        F14 = 0;
-        R7F14 = 0;
         
         % input directional indicator
         Din = sign(w2);
@@ -94,7 +103,6 @@ P4 = 10;
         % pin joint directional indicators
         D12 = Din;
         D34 = sign(h3(i))*Din;
-        
         % pin in slot directional indicators
         if F23n > 0
             D23 = sign(f3(i) + R*(h3(i) - 1))*Din;
@@ -111,25 +119,32 @@ P4 = 10;
         % slider in slot directional indicator
         D14 = sign(-f4(i))*Din;
         
-        for j = 1:100
+            F12 = 0;
+            F34 = 0;
+            F23n = 0;
+            F13n = 0;
+            F14 = 0;
+            R7F14 = 0;
+        
+        for j = 1:1000
             % T12 = mu*R*|F12|*D12 acting on link 1
-            T12 = mu*R*F12*D12; %lbf*in
+            T12 = mu*R*abs(F12)*D12; %lbf*in
             % T34 = mu*R*|F34|*D34 acting on link 4
-            T34 = mu*R*F34*D34; %lbf*in
+            T34 = mu*R*abs(F34)*D34; %lbf*in
             % T13 = mu*R*F13*D13 acting on link 1
             T13 = mu*R*F13n*D13; %lbf*in
             % f13 = mu*F13n acting on link 1
             f13 = mu*abs(F13n)*D13; %lbf
             f13x = f13*cos(th3(i) - pi);
             f13y = f13*sin(th3(i) - pi);
-            % T23 = mu*R*F13*D13 acting on link 2
+            % T23 = mu*R*F23*D13 acting on link 2
             T23 = mu*R*F23n*D23; %lbf*in
             % f23 = mu*F23n acting on link 2
             f23 = mu*abs(F23n)*D23; %lbf
             f23x = f23*cos(th3(i) - pi);
             f23y = f23*sin(th3(i) - pi);
             % f14 acting on link 4
-            N14 = [F14; R7F14]\[1 1; rw -rw]; %lbf
+            N14 = [1 1; rw -rw]\[F14; R7F14]; %lbf
             f14 = mu*(abs(N14(1)) + abs(N14(2)))*D14; %lbf
             % the book swaps the signs on T14 depending on >0 but I don;t
             % think that's necessary
@@ -138,7 +153,7 @@ P4 = 10;
             if N14(1) > 0
                 T14(1) = mu*rh*N14(1)*D14; %lbf*in
             else
-                T14(1) = mu*rh*N14(2)*D14; %lbf*in
+                T14(1) = mu*rh*N14(1)*D14; %lbf*in
             end
             
             if N14(2) > 0
@@ -149,14 +164,24 @@ P4 = 10;
             
             % storing the old friction values
             fricOld = fric;
-            fric = [(1/sqrt(1/mu^2 + 1))*F12;
+            fricStore{i,j} = fric;
+            fric = [(1/sqrt(1/mu^2 + 1))*F12;;
                     (1/sqrt(1/mu^2 + 1))*F34;
-                    f13;
+                    0;
                     f23;
                     f14;]
+%             fric = [(1/sqrt(1/mu^2 + 1))*F12;
+%                     (1/sqrt(1/mu^2 + 1))*F34;
+%                     f13;
+%                     f23;
+%                     f14;]
+
            
             relError = norm(fric - fricOld)/norm(fricOld);
-            if relError < tol
+            if relError < tol || all(fric == fricOld)
+                fricStore{i,j+1} = fric;
+                stop = 1;
+                disp('finished');
                 break
             end
             
@@ -177,21 +202,81 @@ P4 = 10;
                     m3*a_g3y;
                     m4*a_g4x;
                     m4*a_g4y;
-                    Ig_2*alpha2/12;
-                    Ig_3*alpha3/12 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + m3*g*cos(th3(i)));
+                    Ig_2*alpha2;
+                    Ig_3*alpha3 + m3*Rcg3*(cos(th3(i))*a_g3y - sin(th3(i))*a_g3x + g*cos(th3(i)));
                     0];
             
-            jForce = [f23x;
-                    -m2*g + f23y;
-                    -f13x + -f23x;
-                    -m3*g + -f13y + -f23y;
-                    P4 + f14;
+%             jForce = [f23x;
+%                     -m2*g + f23y;
+%                     -f13x + -f23x;
+%                     -m3*g + -f13y + -f23y;
+%                     P4 + f14;
+%                     -m4*g;
+%                     -T12 + T23 + R2*cos((th2(i)+pi/2) - (th3(i)-pi))*f23;
+%                     -T34 + -T13 + -T23;
+%                     T34 + T14(1) + T14(2)];
+                
+            jForce = [0;
+                    -m2*g;
+                    0;
+                    -m3*g;
+                    P4;
                     -m4*g;
-                    -T12 + T23;
-                    -T34 + -T13 + -T23;
+                    0;
+                    0;
+                    0];
+            
+            jF12 = [0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    -T12;
+                    0;
+                    0];
+                
+            jF34 = [0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    -T34;
                     T34];
             
-            J = jKinem - jForce;
+%             jF13 = [0;
+%                     0;
+%                     -f13x;
+%                     -f13y;
+%                     0;
+%                     0;
+%                     0;
+%                     -T13;
+%                     0];
+
+            jF23 = [f23x;
+                    f23y;
+                    -f23x;
+                    -f23y;
+                    0;
+                    0;
+                    T23 + R2*cos((th2(i)+pi/2) - (th3(i)-pi))*f23;
+                    -T23;
+                    0];
+             
+            jF14 = [0;
+                    0;
+                    0;
+                    0;
+                    f14;
+                    0;
+                    0;
+                    0;
+                    T14(1) + T14(2)];
+                
+            J = jKinem - jForce - jF12 - jF34 - jF14 - jF23;% - jF23;% - jF13 - jF23 - jF14;            
             
             x = A\J;
             
@@ -210,6 +295,7 @@ P4 = 10;
         end
         disp(j)
 
+        forcesIDP.theta2(i) = th2(i);
         forcesIDP.F12x(i) = x(1);
         forcesIDP.F12y(i) = x(2);
 
@@ -228,9 +314,26 @@ P4 = 10;
         forcesIDP.R7F14(i) = x(8);
 
         forcesIDP.T2(i) = x(9);
-
+        
+        forcesIDP.N14_1(i) = N14(1);
+        forcesIDP.N14_2(i) = N14(2);
+         
+        forcesIDP.f12(i) = fric(1);
+        forcesIDP.f34(i) = fric(2);
+%        forcesIDP.f13(i) = fric(3);
+        forcesIDP.f23(i) = fric(4);
+        forcesIDP.f14(i) = fric(5);
+        forcesIDP.iter(i) = j;
+        
+        forcesIDP.T12(i) = T12;
+        forcesIDP.T34(i) = T34;
+%        forcesIDP.T13(i) = T13;
+        forcesIDP.T23(i) = T23;
+        forcesIDP.T14_1(i) = T14(1);
+        forcesIDP.T14_2(i) = T14(2);
     end
     
+    disp(max(forcesIDP.iter))
     filename = 'forcesIDP.xlsx';
     writetable(forcesIDP,filename,'Sheet',1,'Range','A1')
 
@@ -241,7 +344,7 @@ P4 = 10;
     rowMinMax = {'min','max'};
 
 
-    %%  Position Graph
+    %%  Joint Forces
 
     % defining columns for the position graph data
 
@@ -252,16 +355,16 @@ P4 = 10;
     posMinMax = table('Size',sz, 'VariableTypes',varTypes, 'VariableNames',posColNames, 'RowNames',rowMinMax);
 
     % finding indices of the local minimums and maximums for the position graph
-    for i=1:8
-        maxes = (find(forcesIDP.(posColNames{i}) == max(forcesIDP.(posColNames{i}))));
-        posMinMax.(posColNames{i}) = [find(forcesIDP.(posColNames{i}) == min(forcesIDP.(posColNames{i}))); maxes(1)];
-    end
+%     for i=1:8
+%         maxes = (find(forcesIDP.(posColNames{i}) == max(forcesIDP.(posColNames{i}))));
+%         posMinMax.(posColNames{i}) = [find(forcesIDP.(posColNames{i}) == min(forcesIDP.(posColNames{i}))); maxes(1)];
+%     end
 
     % defining the figure
-    figure('Name','Position','position',[10,10,1200,1000])
+    figure('Name','Joint Forces','position',[10,10,1200,1000])
     % plotting theta3, R3, R4, R5 versus theta2
     for i=1:8
-        plot(kinData.theta2, forcesIDP.(posColNames{i}),'-x','MarkerIndices',[posMinMax.(posColNames{i}).'],'color',graphColors{i})
+        plot(kinData.theta2, forcesIDP.(posColNames{i}),'color',graphColors{i})
         hold on
     end
     hold off
@@ -283,22 +386,56 @@ P4 = 10;
     % setting the limits of the axis
     xlim([0,2*pi])
 
-    % adding labels to the marks denoting the maximums and minimums
-    % for i=1:2
-    %     for j=1:8
-    %         % getting the x coordinate of the mark
-    %         xPoint = kinData.theta2(posMinMax{rowMinMax{i},posColNames{j}});
-    %         % getting the y coordinate of the mark
-    %         yPoint = kinData.(posColNames{j})(posMinMax{rowMinMax{i},posColNames{j}});
-    %         % combining all the information into a sinlge formatted string for the label
-    %         labelString = sprintf('local %s\n%s=%0.4f @ %s2=%0.4f',rowMinMax{i},posColNames{j},yPoint,char(952),xPoint);
-    %         % adding the text to the graph
-    %         text(xPoint, yPoint, labelString,'VerticalAlignment','top','HorizontalAlignment','center')
-    %     end
-    % end
-
     % saving the graph
     ax = gca;
     saveName = sprintf('jointForcesFriction_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
     exportgraphics(ax,saveName)
-%end
+    
+%     figure(20)
+%     plot(kinData.theta2, f4*w2, '-')
+    
+     %%  Friction Forces
+%     
+%     posColNames = {'f12','f34','f13','f23','f14','T12','T34','T13','T23','T14_1','T14_2'};
+% 
+%     % defining the figure
+%     figure('Name','Friction','position',[10,10,1200,1000])
+%     % plotting theta3, R3, R4, R5 versus theta2
+%     for i=1:8
+%         plot(kinData.theta2, forcesIDP.(posColNames{i}),'color',graphColors{i})
+%         hold on
+%     end
+%     hold off
+% 
+%     % adding plot title
+%     tit = sprintf('Joint Force Analysis at w2 = %0.00f and P4 = %0.00f', w2, P4)
+%     title(tit)
+%     % creating legend for plot
+%     legend(posColNames)
+%     % labeling the x & y axes
+%     xlabel('\theta2_{(rad)}')
+%     ylabel('Joint Forces')
+%     % setting xtick values and labels
+%     xticks(0:pi/4:2*pi)
+%     xticklabels({'0','\pi/4','\pi/2','3\pi/4','\pi','5\pi/4','3\pi/2','7\pi/4','2\pi'})
+%     % adding gridlines
+%     grid on
+%     grid minor
+%     % setting the limits of the axis
+%     xlim([0,2*pi])
+% 
+%     % saving the graph
+%     ax = gca;
+%     saveName = sprintf('jointForcesFriction_w2_%0.00f_P4_%0.00f.jpg', w2, P4)
+%     exportgraphics(ax,saveName)
+% %end
+
+%% Graph T2 with and without friction
+noFric = readtable('torqueConstant.xlsx');
+
+figure('Name','compare')
+plot(noFric.theta2,noFric.T2,...
+    forcesIDP.theta2,forcesIDP.T2)
+legend('noFric','Fric')
+min(forcesIDP.T2-noFric.T2)
+max(forcesIDP.T2-noFric.T2)

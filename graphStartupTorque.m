@@ -1,4 +1,4 @@
-tspan = 1:229;
+tspan = 1:275;
 
 figure(2)
 plot(torData.t(tspan), torData.w2(tspan))
